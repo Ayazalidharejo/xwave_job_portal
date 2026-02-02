@@ -44,7 +44,12 @@ export function Login() {
       const redirectTo = from || getDashboardPathForRole(res.role)
       navigate(redirectTo, { replace: true })
     } catch (err) {
-      const msg = err.response?.data?.message || 'Login failed'
+      let msg = 'Login failed. Please try again.'
+      if (err.response) {
+        msg = err.response.data?.message || (err.response.status === 500 ? 'Server error. Please try again later.' : 'Login failed.')
+      } else if (err.request) {
+        msg = 'Could not reach server. Check your connection or try again.'
+      }
       setSubmitError(msg)
     }
   }
