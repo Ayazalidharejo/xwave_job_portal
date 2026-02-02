@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import Add from '@mui/icons-material/Add'
 import FilterList from '@mui/icons-material/FilterList'
 import LinkIcon from '@mui/icons-material/Link'
+import CircularProgress from '@mui/material/CircularProgress'
 import { useAppSelector, useAppDispatch } from '../../../hooks'
 import { setMyApplications, addApplication, setJobLoading } from '../../../store/slices/jobSlice'
 import { jobApi } from '../../../services/api'
@@ -50,6 +51,7 @@ export function JobApplications() {
   const [filterStatus, setFilterStatus] = useState('')
   const [filterPlatform, setFilterPlatform] = useState('')
   const [showFilters, setShowFilters] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
 
   const load = () => {
     dispatch(setJobLoading(true))
@@ -70,6 +72,7 @@ export function JobApplications() {
   }, [filterStatus, filterPlatform])
 
   const handleSubmit = async () => {
+    setSubmitting(true)
     try {
       const res = await jobApi.create({ 
         platform, 
@@ -96,6 +99,8 @@ export function JobApplications() {
     } catch (error) {
       console.error('Error submitting application:', error)
       alert('Failed to submit application. Please try again.')
+    } finally {
+      setSubmitting(false)
     }
   }
 
@@ -271,10 +276,17 @@ export function JobApplications() {
             <button
               type="button"
               onClick={handleSubmit}
-              disabled={!applicationDate || !jobLink}
-              className="btn-primary disabled:opacity-60"
+              disabled={!applicationDate || !jobLink || submitting}
+              className="btn-primary disabled:opacity-60 flex items-center justify-center gap-2"
             >
-              Add Application
+              {submitting ? (
+                <>
+                  <CircularProgress size={20} color="inherit" sx={{ color: 'white' }} />
+                  Adding...
+                </>
+              ) : (
+                'Add Application'
+              )}
             </button>
             <button type="button" onClick={() => { 
               setOpen(false); 

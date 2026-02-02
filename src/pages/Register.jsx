@@ -10,6 +10,7 @@ import Email from '@mui/icons-material/Email'
 import Lock from '@mui/icons-material/Lock'
 import School from '@mui/icons-material/School'
 import MenuBook from '@mui/icons-material/MenuBook'
+import CircularProgress from '@mui/material/CircularProgress'
 import { useAppDispatch, useTilt3d } from '../hooks'
 import { setCredentials } from '../store/slices/authSlice'
 import { getDashboardPathForRole } from '../utils/roleRedirect'
@@ -242,9 +243,16 @@ export function Register() {
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full mt-6 py-3.5 rounded-xl font-semibold text-white bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-60 disabled:pointer-events-none transition-all duration-300 hover:shadow-xl hover:shadow-violet-500/30 hover:-translate-y-1 active:translate-y-0"
+                    className="w-full mt-6 py-3.5 rounded-xl font-semibold text-white bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-60 disabled:pointer-events-none transition-all duration-300 hover:shadow-xl hover:shadow-violet-500/30 hover:-translate-y-1 active:translate-y-0 flex items-center justify-center gap-2"
                   >
-                    Register
+                    {isSubmitting ? (
+                      <>
+                        <CircularProgress size={20} color="inherit" sx={{ color: 'white' }} />
+                        Registering...
+                      </>
+                    ) : (
+                      'Register'
+                    )}
                   </button>
                 </div>
               </form>

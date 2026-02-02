@@ -11,6 +11,7 @@ import Title from '@mui/icons-material/Title'
 import TextFields from '@mui/icons-material/TextFields'
 import ImageIcon from '@mui/icons-material/Image'
 import HorizontalRule from '@mui/icons-material/HorizontalRule'
+import CircularProgress from '@mui/material/CircularProgress'
 import { useAppSelector, useAppDispatch } from '../../../hooks'
 import { setMyResume, setResumeLoading, setResumeError } from '../../../store/slices/resumeSlice'
 import { resumeApi } from '../../../services/api'
@@ -698,9 +699,18 @@ export function ResumeBuilder() {
             />
 
             <div className="flex flex-wrap gap-2 mt-4">
-              <button type="button" onClick={handleSave} disabled={loading} className="btn-primary gap-2 disabled:opacity-60">
-                <Save className="w-4 h-4" />
-                Save resume
+              <button type="button" onClick={handleSave} disabled={loading} className="btn-primary gap-2 disabled:opacity-60 flex items-center justify-center">
+                {loading ? (
+                  <>
+                    <CircularProgress size={18} color="inherit" sx={{ color: 'white' }} />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4" />
+                    Save resume
+                  </>
+                )}
               </button>
               <button type="button" onClick={downloadPDF} className="btn-secondary gap-2">
                 <Download className="w-4 h-4" />

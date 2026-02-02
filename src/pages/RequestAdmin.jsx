@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import CircularProgress from '@mui/material/CircularProgress'
 import { adminRequestApi } from '../services/api'
 import { ROLES, ROLE_LABELS } from '../constants/roles'
 
@@ -92,8 +93,15 @@ export function RequestAdmin() {
             <label htmlFor="req-reason" className="block text-sm font-medium text-neutral-700 mb-1">Reason (optional)</label>
             <textarea id="req-reason" rows={2} className="input-saas w-full resize-y" {...register('reason')} />
           </div>
-          <button type="submit" disabled={isSubmitting} className="btn-primary w-full py-2.5 disabled:opacity-60">
-            Submit request
+          <button type="submit" disabled={isSubmitting} className="btn-primary w-full py-2.5 disabled:opacity-60 flex items-center justify-center gap-2">
+            {isSubmitting ? (
+              <>
+                <CircularProgress size={20} color="inherit" sx={{ color: 'white' }} />
+                Submitting...
+              </>
+            ) : (
+              'Submit request'
+            )}
           </button>
           <p className="mt-4 text-sm text-neutral-500">
             <Link to="/register" className="text-accent hover:opacity-90">Register as user</Link>

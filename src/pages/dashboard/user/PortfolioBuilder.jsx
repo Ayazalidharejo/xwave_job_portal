@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react'
 import Save from '@mui/icons-material/Save'
 import Preview from '@mui/icons-material/Preview'
+import CircularProgress from '@mui/material/CircularProgress'
 import Mic from '@mui/icons-material/Mic'
 import MicOff from '@mui/icons-material/MicOff'
 import Add from '@mui/icons-material/Add'
@@ -450,9 +451,18 @@ export function PortfolioBuilder() {
         />
 
         <div className="flex flex-wrap gap-2 mt-4">
-          <button type="button" onClick={handleSave} disabled={loading} className="btn-primary gap-2 disabled:opacity-60">
-            <Save className="w-4 h-4" />
-            Save
+          <button type="button" onClick={handleSave} disabled={loading} className="btn-primary gap-2 disabled:opacity-60 flex items-center justify-center">
+            {loading ? (
+              <>
+                <CircularProgress size={18} color="inherit" sx={{ color: 'white' }} />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save className="w-4 h-4" />
+                Save
+              </>
+            )}
           </button>
           <button type="button" onClick={() => setShowPreview(!showPreview)} className="btn-secondary gap-2">
             <Preview className="w-4 h-4" />

@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react'
 import Save from '@mui/icons-material/Save'
 import Add from '@mui/icons-material/Add'
+import CircularProgress from '@mui/material/CircularProgress'
 import Delete from '@mui/icons-material/Delete'
 import Edit from '@mui/icons-material/Edit'
 import Download from '@mui/icons-material/Download'
@@ -357,10 +358,19 @@ const EnhancedResumeBuilder = () => {
           <button
             onClick={saveResume}
             disabled={loading}
-            className="btn-primary"
+            className="btn-primary flex items-center justify-center gap-2"
           >
-            <Save className="h-4 w-4 mr-2" />
-            {loading ? 'Saving...' : 'Save Resume'}
+            {loading ? (
+              <>
+                <CircularProgress size={20} color="inherit" sx={{ color: 'white' }} />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save className="h-4 w-4" />
+                Save Resume
+              </>
+            )}
           </button>
         </div>
       </div>

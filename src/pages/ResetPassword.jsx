@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import Visibility from '@mui/icons-material/Visibility'
 import VisibilityOff from '@mui/icons-material/VisibilityOff'
+import CircularProgress from '@mui/material/CircularProgress'
 import { useAppDispatch } from '../hooks'
 import { setCredentials } from '../store/slices/authSlice'
 import { getDashboardPathForRole } from '../utils/roleRedirect'
@@ -99,8 +100,15 @@ export function ResetPassword() {
             />
             {errors.confirmPassword && <p className="mt-1 text-sm text-red-600">{errors.confirmPassword.message}</p>}
           </div>
-          <button type="submit" disabled={isSubmitting} className="btn-primary w-full py-2.5 disabled:opacity-60">
-            Reset password
+          <button type="submit" disabled={isSubmitting} className="btn-primary w-full py-2.5 disabled:opacity-60 flex items-center justify-center gap-2">
+            {isSubmitting ? (
+              <>
+                <CircularProgress size={20} color="inherit" sx={{ color: 'white' }} />
+                Resetting...
+              </>
+            ) : (
+              'Reset password'
+            )}
           </button>
         </form>
         <p className="mt-4 text-sm text-neutral-500">

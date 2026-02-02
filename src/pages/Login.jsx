@@ -7,6 +7,7 @@ import Visibility from '@mui/icons-material/Visibility'
 import VisibilityOff from '@mui/icons-material/VisibilityOff'
 import Lock from '@mui/icons-material/Lock'
 import Email from '@mui/icons-material/Email'
+import CircularProgress from '@mui/material/CircularProgress'
 import { useAppDispatch, useTilt3d } from '../hooks'
 import { setCredentials } from '../store/slices/authSlice'
 import { getDashboardPathForRole } from '../utils/roleRedirect'
@@ -167,9 +168,16 @@ export function Login() {
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full mt-6 py-3.5 rounded-xl font-semibold text-white bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-60 disabled:pointer-events-none transition-all duration-300 hover:shadow-xl hover:shadow-indigo-500/30 hover:-translate-y-1 active:translate-y-0"
+                    className="w-full mt-6 py-3.5 rounded-xl font-semibold text-white bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-60 disabled:pointer-events-none transition-all duration-300 hover:shadow-xl hover:shadow-indigo-500/30 hover:-translate-y-1 active:translate-y-0 flex items-center justify-center gap-2"
                   >
-                    Sign in
+                    {isSubmitting ? (
+                      <>
+                        <CircularProgress size={20} color="inherit" sx={{ color: 'white' }} />
+                        Signing in...
+                      </>
+                    ) : (
+                      'Sign in'
+                    )}
                   </button>
                 </div>
               </form>
