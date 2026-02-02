@@ -2,7 +2,7 @@ import axios from 'axios'
 import { store } from '../store'
 import { logout } from '../store/slices/authSlice'
 
-const baseURL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '/api' : 'http://localhost:5000/api')
+const baseURL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? 'https://xwave-backend-portal.vercel.app/api' : 'http://localhost:5000/api')
 
 export const api = axios.create({
   baseURL,
@@ -24,7 +24,7 @@ api.interceptors.response.use(
   (err) => {
     if (err.response?.status === 401) {
       store.dispatch(logout())
-      window.location.href = '/login'
+      window.location.href = '/'
     }
     return Promise.reject(err)
   }

@@ -123,6 +123,9 @@ export default {
         'safe-bottom': 'env(safe-area-inset-bottom)',
         'safe-left': 'env(safe-area-inset-left)',
         'safe-right': 'env(safe-area-inset-right)',
+        /* ensure fractional utilities exist when used in @apply */
+        '0.5': '0.125rem',
+        '1.5': '0.375rem',
       },
       maxWidth: {
         'content': '1280px',
@@ -176,24 +179,6 @@ export default {
       backdropBlur: {
         xs: '2px',
       },
-    },
-    /* 8px grid */
-    spacing: {
-      0: '0',
-      1: '0.25rem',   /* 4px */
-      2: '0.5rem',    /* 8px */
-      '2.5': '0.625rem', /* 10px */
-      3: '0.75rem',   /* 12px */
-      4: '1rem',      /* 16px */
-      5: '1.25rem',
-      6: '1.5rem',
-      8: '2rem',
-      10: '2.5rem',
-      12: '3rem',
-      14: '3.5rem',
-      16: '4rem',
-      20: '5rem',
-      24: '6rem',
     },
     screens: {
       xs: '375px',

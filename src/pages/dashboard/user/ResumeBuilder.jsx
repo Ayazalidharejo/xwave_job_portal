@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from 'react'
 import Mic from '@mui/icons-material/Mic'
 import MicOff from '@mui/icons-material/MicOff'
 import Save from '@mui/icons-material/Save'
+import Download from '@mui/icons-material/Download'
 import Add from '@mui/icons-material/Add'
 import Delete from '@mui/icons-material/Delete'
 import ArrowUpward from '@mui/icons-material/ArrowUpward'
@@ -15,12 +16,15 @@ import { setMyResume, setResumeLoading, setResumeError } from '../../../store/sl
 import { resumeApi } from '../../../services/api'
 import { portfolioApi } from '../../../services/api'
 import { useVoiceCommand } from '../../../hooks/useVoiceCommand'
+import html2canvas from 'html2canvas'
+import { jsPDF } from 'jspdf'
 
 const BLOCK_TYPES = [
   { type: 'paragraph', label: 'Paragraph', Icon: TextFields },
   { type: 'heading', label: 'Heading', Icon: Title },
   { type: 'image', label: 'Image', Icon: ImageIcon },
-  { type: 'divider', label: 'Line / Divider', Icon: HorizontalRule },
+  { type: 'divider', label: 'Single line', Icon: HorizontalRule },
+  { type: 'divider_double', label: 'Double line', Icon: HorizontalRule },
 ]
 
 const HEADING_LEVELS = [
@@ -49,7 +53,8 @@ function emptyBlock(type) {
   if (type === 'paragraph') return { type: 'paragraph', content: '', color: '' }
   if (type === 'heading') return { type: 'heading', content: '', level: 1, color: '' }
   if (type === 'image') return { type: 'image', url: '', alt: '', align: 'block', width: 200, height: 150 }
-  if (type === 'divider') return { type: 'divider' }
+  if (type === 'divider') return { type: 'divider', lineStyle: 'single' }
+  if (type === 'divider_double') return { type: 'divider', lineStyle: 'double' }
   return { type: 'paragraph', content: '', color: '' }
 }
 
@@ -58,7 +63,7 @@ function contentToBlocks(content) {
   if (!content) return []
   if (Array.isArray(content.blocks) && content.blocks.length) {
     return content.blocks.map((b) => {
-      if (b.type === 'divider') return { type: 'divider' }
+      if (b.type === 'divider') return { type: 'divider', lineStyle: b.lineStyle || 'single' }
       return b
     })
   }
@@ -71,6 +76,151 @@ function contentToBlocks(content) {
 function blocksToContent(blocks) {
   const summary = blocks.find((b) => b.type === 'paragraph')?.content ?? ''
   return { summary, blocks }
+}
+
+/** Default template – image jaisa: name+title right bold, contact left, no divider after contact; all dividers single 90% left */
+function getDefaultResumeBlocks() {
+  return [
+    { type: 'heading', content: 'Imrana Saif', level: 1, color: '' },
+    { type: 'paragraph', content: 'UX/UI Designer', color: '' },
+    { type: 'heading', content: 'Contact', level: 2, color: '' },
+    { type: 'paragraph', content: '+92-3095813292 • imranasaifxwave92@gmail.com • LinkedIn • Behance', color: '' },
+    { type: 'heading', content: 'Professional Experience', level: 2, color: '' },
+    {
+      type: 'paragraph',
+      content: `RathiSoft Innovation — Jul 2025 - Jan 2026
+A Pakistan-based software development company dedicated to engineering and technology excellence.
+Tourism & Travel Booking Platform | 12 Months
+• Contributed to **UI/UX improvements** for a travel booking and selling platform.
+• Assisted in designing **user-friendly layouts** for tour listings and platform pages.
+• Improved **content clarity and information structure** for better user understanding.
+• Collaborated with team members to understand **user needs and platform flow**.
+• Supported **basic usability enhancements** based on feedback and requirements.
+Tools Used: Figma, Canva, Google Docs, Platform Admin Panel, Customer Section, Supplier Section.
+
+MedSynk: Small Clinics Web App — Jul 2025 - Sep 2025
+A web app to help small clinics manage appointments, patient records, and daily operations.
+• Designed a healthcare management web app to streamline doctor-patient interactions and appointment scheduling. Focused on creating an intuitive, user-friendly interface with clean layouts, easy navigation. Contributed to wireframes, user flows, style guide, and final UI screens to improve overall user experience and accessibility.
+Project Link
+
+Dunya News Website Redesign — Jan 2025 - March 2025
+Redesign of the Dunya News website to improve usability, navigation, and visual appeal.
+• Employed Figma to elevate Zain Estates website from low-fidelity to high-fidelity design, improving auto layout skills. The training sessions during the internship increased participation skills and design knowledge.
+Project Link
+
+Fixify: Cars & Bikes Breakdown App — Sep 2024 - Jan 2025
+An app to provide quick breakdown assistance for cars and bikes.`,
+      color: '',
+    },
+    { type: 'divider', lineStyle: 'single' },
+    { type: 'heading', content: 'Education', level: 2, color: '' },
+    {
+      type: 'paragraph',
+      content: `Government College Faisalabad, Pakistan — Jun 2011 - Aug 2013
+Masters of Arts`,
+      color: '',
+    },
+    { type: 'divider', lineStyle: 'single' },
+    { type: 'heading', content: 'Certifications', level: 2, color: '' },
+    {
+      type: 'paragraph',
+      content: `XWAVE — Sep 2024 - Sep 2025
+• Completed a 12-months on-site UI/UX course; executed 3 impressive portfolio projects during the program using Figma, Wireframing and Prototyping.`,
+      color: '',
+    },
+    { type: 'divider', lineStyle: 'single' },
+    { type: 'heading', content: 'Additional Skills', level: 2, color: '' },
+    {
+      type: 'paragraph',
+      content: '- Design Tools: Figma, Canva\n- UX Skills: User research, Wireframing, Prototyping, Work With Components, Animation',
+      color: '',
+    },
+  ]
+}
+
+/** Quick-add section templates – har section ek click me add; all dividers single 90% left */
+const QUICK_SECTIONS = [
+  { label: 'Contact', dividerBefore: 'single', blocks: [{ type: 'heading', content: 'Contact', level: 2, color: '' }, { type: 'paragraph', content: '+92-XXX-XXXXXXX • your.email@example.com • LinkedIn • Behance', color: '' }] },
+  { label: 'Professional Experience', dividerBefore: 'single', blocks: [{ type: 'heading', content: 'Professional Experience', level: 2, color: '' }, { type: 'paragraph', content: 'Company Name — Role (Month Year – Month Year)\n• Key responsibility or achievement.\n• Another point.\n• Tools or skills used.', color: '' }] },
+  { label: 'Education', dividerBefore: 'single', blocks: [{ type: 'heading', content: 'Education', level: 2, color: '' }, { type: 'paragraph', content: 'Degree — Institution (Year – Year)\nBrief description if needed.', color: '' }] },
+  { label: 'Certifications', dividerBefore: 'single', blocks: [{ type: 'heading', content: 'Certifications', level: 2, color: '' }, { type: 'paragraph', content: 'Certification Name (Month Year – Month Year)\n• Course or project detail.', color: '' }] },
+  { label: 'Additional Skills', dividerBefore: 'single', blocks: [{ type: 'heading', content: 'Additional Skills', level: 2, color: '' }, { type: 'paragraph', content: '- Design Tools: Figma, Canva\n- UX Skills: User research, Wireframing, Prototyping', color: '' }] },
+]
+
+/** Em dash se split: "Company — Dates" → left bold, right right-aligned (image jaisa) */
+const EM_DASH = '\u2014'
+const DASH_SEP = ' — '
+
+/** Text me **word** ko bold render */
+function renderTextWithBold(text) {
+  if (!text || !String(text).includes('**')) return text
+  const parts = String(text).split(/\*\*(.+?)\*\*/g)
+  return parts.map((p, i) => i % 2 === 1 ? <strong key={i}>{p}</strong> : p)
+}
+
+/** Single divider line – 100% width (between experience entries, image jaisa) */
+const INLINE_HR_STYLE = { width: '100%', marginTop: '0.75rem', marginBottom: '0.75rem', border: 'none', borderTop: '1px solid #18181b', display: 'block' }
+
+/** Paragraph lines: empty line = single divider; Company — Dates; • bullet (with **bold**); Project line bold+italic; Project Link blue; Tools Used: bold */
+function renderParagraphLines(content, colorStyle) {
+  if (!content || !content.trim()) return <span className="inline-block min-h-[1em]">\u00A0</span>
+  const lines = content.split('\n')
+  return (
+    <span className="block" style={colorStyle}>
+      {lines.map((line, idx) => {
+        const t = line.trimStart()
+        const mt = idx > 0 ? '0.125rem' : 0
+        const prevHadDash = idx > 0 && (lines[idx - 1].includes(DASH_SEP) || lines[idx - 1].includes(EM_DASH))
+        if (t === '') {
+          return <hr key={idx} style={INLINE_HR_STYLE} aria-hidden />
+        }
+        if (t.startsWith('•')) {
+          return <div key={idx} className="pl-6 py-0.5 leading-relaxed" style={{ textIndent: '-0.5rem', marginTop: mt }}>{renderTextWithBold(line)}</div>
+        }
+        if (t.startsWith('-')) {
+          return <div key={idx} className="pl-6 py-0.5 leading-relaxed" style={{ textIndent: '-0.5rem', marginTop: mt }}>{renderTextWithBold(line)}</div>
+        }
+        if (t === 'Project Link' || t.startsWith('Project Link ')) {
+          return <div key={idx} className="py-0.5 leading-relaxed pl-6" style={{ marginTop: mt }}><span className="text-[#2563eb] underline">{line}</span></div>
+        }
+        if (t.startsWith('Tools Used:')) {
+          return <div key={idx} className="py-0.5 leading-relaxed pl-6" style={{ marginTop: mt }}><span className="font-bold">Tools Used:</span>{renderTextWithBold(line.slice(11) || '')}</div>
+        }
+        if (t.includes(' | ')) {
+          return <div key={idx} className="py-0.5 leading-relaxed pl-6 font-bold italic" style={{ marginTop: mt }}>{line}</div>
+        }
+        const sep = line.includes(DASH_SEP) ? DASH_SEP : line.includes(EM_DASH) ? EM_DASH : null
+        if (sep) {
+          const [left, right] = line.split(sep).map((s) => s.trim())
+          return (
+            <div key={idx} className="flex justify-between items-baseline gap-2 py-0.5 leading-relaxed" style={{ marginTop: mt }}>
+              <span className="font-bold">{left || '\u00A0'}</span>
+              <span className="shrink-0">{right || ''}</span>
+            </div>
+          )
+        }
+        return <div key={idx} className={`py-0.5 leading-relaxed ${prevHadDash ? 'pl-6' : ''}`} style={{ marginTop: mt }}>{renderTextWithBold(line || '\u00A0')}</div>
+      })}
+    </span>
+  )
+}
+
+/** Contact line: phone • email • LinkedIn • Behance – link names blue underlined, centered (image jaisa) */
+function renderContactLine(content, colorStyle) {
+  if (!content || !content.trim()) return <span className="inline-block min-h-[1em]">\u00A0</span>
+  const linkNames = ['linkedin', 'behance', 'portfolio', 'dribbble', 'github', 'website', 'project link']
+  const parts = content.split(/\s*•\s*/).map((p) => p.trim()).filter(Boolean)
+  return (
+    <span className="block text-center text-sm leading-relaxed" style={colorStyle}>
+      {parts.map((part, idx) => {
+        const isLink = linkNames.some((name) => part.toLowerCase() === name || part.toLowerCase().startsWith(name + ' '))
+        if (isLink) {
+          return <span key={idx}>{idx > 0 && ' • '}<span className="text-[#2563eb] underline">{part}</span></span>
+        }
+        return <span key={idx}>{idx > 0 && ' • '}{part}</span>
+      })}
+    </span>
+  )
 }
 
 export function ResumeBuilder() {
@@ -182,19 +332,24 @@ export function ResumeBuilder() {
     try {
       const { data } = await resumeApi.getMy()
       dispatch(setMyResume(data))
-      if (data?.content) setBlocks(contentToBlocks(data.content))
-      else setBlocks([emptyBlock('paragraph')])
+      if (data?.content) {
+        const parsed = contentToBlocks(data.content)
+        const hasContent = parsed.some((b) => (b.type === 'paragraph' || b.type === 'heading') && (b.content || '').trim())
+        if (hasContent) setBlocks(parsed)
+        else setBlocks(getDefaultResumeBlocks())
+      } else {
+        setBlocks(getDefaultResumeBlocks())
+      }
     } catch (err) {
       dispatch(setResumeError(err.response?.data?.message || 'Failed to load'))
+      setBlocks(getDefaultResumeBlocks())
     } finally {
       dispatch(setResumeLoading(false))
     }
   }
 
   useEffect(() => { load() }, [])
-  useEffect(() => {
-    if (myResume?.content) setBlocks(contentToBlocks(myResume.content))
-  }, [myResume])
+  /* Blocks sirf load() se set hote hain – edit ke waqt myResume se overwrite nahi karte, isliye preview me edit turant dikhta hai */
 
   const handleSave = async () => {
     const content = blocksToContent(blocks)
@@ -206,10 +361,49 @@ export function ResumeBuilder() {
     }
   }
 
+  const downloadPDF = async () => {
+    const el = document.getElementById('resume-preview-for-pdf')
+    if (!el) return
+    try {
+      const canvas = await html2canvas(el, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff',
+      })
+      const imgData = canvas.toDataURL('image/png')
+      const pdf = new jsPDF({ format: 'a4', unit: 'mm' })
+      const pdfW = pdf.internal.pageSize.getWidth()
+      const pdfH = pdf.internal.pageSize.getHeight()
+      const imgW = canvas.width
+      const imgH = canvas.height
+      const ratio = Math.min(pdfW / imgW, pdfH / imgH) * 0.95
+      const w = imgW * ratio
+      const h = imgH * ratio
+      pdf.addImage(imgData, 'PNG', (pdfW - w) / 2, 10, w, h)
+      pdf.save('resume.pdf')
+    } catch (err) {
+      console.error('PDF export failed:', err)
+      dispatch(setResumeError('PDF download failed. Try again.'))
+    }
+  }
+
   const addBlock = (type) => {
     const newBlock = emptyBlock(type)
     setBlocks((prev) => [...prev, newBlock])
     setSelectedIndex(blocks.length)
+  }
+
+  /** Quick add: divider (single/double) + section heading + paragraph (image jaisa) */
+  const addQuickSection = (section) => {
+    const newBlocks = section.blocks.map((b) => ({ ...b }))
+    const lineStyle = section.dividerBefore || 'single'
+    setBlocks((prev) => {
+      const next = [...prev]
+      if (next.length > 0) next.push({ type: 'divider', lineStyle })
+      return [...next, ...newBlocks]
+    })
+    setSelectedIndex(blocks.length + (blocks.length > 0 ? 1 : 0))
   }
 
   const updateBlock = (index, patch) => {
@@ -288,6 +482,20 @@ export function ResumeBuilder() {
           )}
 
           <div className="card-advanced p-4 sm:p-5">
+            <p className="text-sm font-medium text-zinc-700 mb-2">Quick add section (image jaisa)</p>
+            <div className="flex flex-wrap gap-2 mb-4">
+              {QUICK_SECTIONS.map((section) => (
+                <button
+                  key={section.label}
+                  type="button"
+                  onClick={() => addQuickSection(section)}
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium border border-indigo-200 bg-indigo-50/80 text-indigo-700 hover:bg-indigo-100"
+                >
+                  {section.label}
+                </button>
+              ))}
+            </div>
+
             <p className="text-sm font-medium text-zinc-700 mb-2">Add block</p>
             <div className="flex flex-wrap gap-2 mb-4">
               {BLOCK_TYPES.map(({ type, label, Icon }) => (
@@ -324,7 +532,7 @@ export function ResumeBuilder() {
                         {block.type === 'heading' && ` (H${block.level ?? 1})`}
                       </span>
                       <span className="block truncate text-sm text-zinc-800 mt-0.5">
-                        {block.type === 'divider' ? 'Horizontal line' : block.type === 'image' ? (block.url ? 'Image' : 'No image') : (block.content || 'Empty')}
+                        {block.type === 'divider' ? (block.lineStyle === 'double' ? 'Double line' : 'Single line') : block.type === 'image' ? (block.url ? 'Image' : 'No image') : (block.content || 'Empty')}
                       </span>
                     </button>
                     <button type="button" onClick={() => removeBlock(index)} className="p-1.5 rounded-lg text-zinc-500 hover:bg-red-50 hover:text-red-600 shrink-0" aria-label="Remove block">
@@ -394,7 +602,17 @@ export function ResumeBuilder() {
                       )}
 
                       {block.type === 'divider' && (
-                        <p className="text-xs text-zinc-500">A horizontal line will appear between blocks in the preview.</p>
+                        <div>
+                          <label className="block text-xs font-medium text-zinc-500 mb-1">Line style</label>
+                          <select
+                            value={block.lineStyle || 'single'}
+                            onChange={(e) => updateBlock(index, { lineStyle: e.target.value })}
+                            className="input-saas w-full"
+                          >
+                            <option value="single">Single line</option>
+                            <option value="double">Double line</option>
+                          </select>
+                        </div>
                       )}
 
                       {block.type === 'image' && (
@@ -479,10 +697,16 @@ export function ResumeBuilder() {
               }}
             />
 
-            <button type="button" onClick={handleSave} disabled={loading} className="btn-primary mt-4 gap-2 disabled:opacity-60 w-full sm:w-auto">
-              <Save className="w-4 h-4" />
-              Save resume
-            </button>
+            <div className="flex flex-wrap gap-2 mt-4">
+              <button type="button" onClick={handleSave} disabled={loading} className="btn-primary gap-2 disabled:opacity-60">
+                <Save className="w-4 h-4" />
+                Save resume
+              </button>
+              <button type="button" onClick={downloadPDF} className="btn-secondary gap-2">
+                <Download className="w-4 h-4" />
+                Download PDF
+              </button>
+            </div>
           </div>
 
           {myResume?.status && (
@@ -493,50 +717,103 @@ export function ResumeBuilder() {
           )}
         </div>
 
-        {/* Right: preview */}
+        {/* Right: preview – design image jaisa: single-line horizontal dividers, full width, clean UI */}
         <div className="card-advanced p-6 lg:p-8 min-h-[400px]">
-          <h2 className="text-lg font-semibold text-zinc-900 mb-4">Preview</h2>
-          <div className="max-w-[21cm] mx-auto text-sm text-zinc-800 leading-relaxed space-y-3">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-zinc-900">Preview</h2>
+            <button type="button" onClick={downloadPDF} className="btn-secondary gap-1.5 text-sm py-1.5">
+              <Download className="w-4 h-4" />
+              Download PDF
+            </button>
+          </div>
+          <div
+            id="resume-preview-for-pdf"
+            className="max-w-[21cm] mx-auto bg-white text-black rounded border border-zinc-200 p-8 shadow-inner print:shadow-none"
+            style={{ minHeight: '400px' }}
+          >
             {blocks.length === 0 ? (
-              <p className="text-zinc-400">Add a paragraph, heading, or image above.</p>
+              <p className="text-zinc-500 text-sm">Add a paragraph, heading, or image above.</p>
             ) : (
-              blocks.map((block, i) => {
-                if (block.type === 'paragraph') {
-                  const style = block.color ? { color: block.color } : {}
-                  return <p key={i} className="whitespace-pre-wrap" style={style}>{block.content || '\u00A0'}</p>
-                }
-                if (block.type === 'heading') {
-                  const level = Math.min(3, Math.max(1, block.level ?? 1))
-                  const style = block.color ? { color: block.color } : {}
-                  const size = { 1: 'text-xl', 2: 'text-lg', 3: 'text-base' }[level] || 'text-lg'
-                  const content = block.content || '\u00A0'
-                  if (level === 1) return <h1 key={i} className={`font-semibold ${size}`} style={style}>{content}</h1>
-                  if (level === 2) return <h2 key={i} className={`font-semibold ${size}`} style={style}>{content}</h2>
-                  return <h3 key={i} className={`font-semibold ${size}`} style={style}>{content}</h3>
-                }
-                if (block.type === 'image' && block.url) {
-                  const w = block.width ?? 200
-                  const h = block.height ?? 150
-                  const align = block.align ?? 'block'
-                  if (align === 'block') {
-                    return (
-                      <div key={i} className="mb-2">
-                        <img src={block.url} alt={block.alt || ''} width={w} height={h} className="rounded-lg object-cover max-w-full" />
-                      </div>
-                    )
-                  }
-                  const floatClass = align === 'right' ? 'float-right ml-4 mb-2' : 'float-left mr-4 mb-2'
-                  return (
-                    <div key={i} className={floatClass}>
-                      <img src={block.url} alt={block.alt || ''} width={w} height={h} className="rounded-lg object-cover" />
-                    </div>
-                  )
-                }
-                if (block.type === 'divider') {
-                  return <hr key={i} className="border-t border-zinc-300 my-4" />
-                }
-                return null
-              })
+              (() => {
+                return (
+                  <div className="text-[#18181b] text-sm leading-relaxed font-sans antialiased" style={{ maxWidth: '21cm' }}>
+                    {blocks.map((block, i) => {
+                      const prevBlock = blocks[i - 1]
+                      const isTitle = prevBlock?.type === 'heading' && prevBlock?.level === 1 && block.type === 'paragraph'
+                      const isContact = prevBlock?.type === 'heading' && String(prevBlock?.content || '').trim().toLowerCase() === 'contact' && block.type === 'paragraph'
+
+                      if (block.type === 'paragraph') {
+                        const style = block.color ? { color: block.color } : { color: '#18181b' }
+                        if (isContact) {
+                          return (
+                            <p key={i} className="text-[#18181b] text-center mt-1 mb-0">
+                              {renderContactLine(block.content, style)}
+                            </p>
+                          )
+                        }
+                        return (
+                          <p key={i} className={`text-[#18181b] ${isTitle ? 'text-center text-base font-bold mt-0 mb-0' : 'mt-1 mb-0'}`}>
+                            {renderParagraphLines(block.content, style)}
+                          </p>
+                        )
+                      }
+                      if (block.type === 'heading') {
+                        const level = Math.min(3, Math.max(1, block.level ?? 1))
+                        const style = block.color ? { color: block.color } : {}
+                        const size = { 1: 'text-2xl', 2: 'text-lg', 3: 'text-base' }[level] || 'text-lg'
+                        const content = block.content || '\u00A0'
+                        const alignClass = level === 1 ? 'text-center' : 'text-left'
+                        const mt = level === 1 ? (i === 0 ? '0' : '1.5rem') : '1.25rem'
+                        if (level === 1) {
+                          return <h1 key={i} className={`font-bold ${size} text-[#18181b] ${alignClass}`} style={{ ...style, marginTop: mt, marginBottom: '0.25rem' }}>{content}</h1>
+                        }
+                        if (level === 2) {
+                          const hrStyle = { width: '100%', border: 'none', borderTop: '1px solid #18181b', display: 'block' }
+                          return (
+                            <div key={i} style={{ marginTop: mt }}>
+                              <h2 className={`font-bold ${size} text-[#18181b] text-left`} style={style}>{content}</h2>
+                              <div className="mt-1 mb-3 w-full">
+                                <hr style={hrStyle} aria-hidden />
+                                <hr style={{ ...hrStyle, marginTop: '2px' }} aria-hidden />
+                              </div>
+                            </div>
+                          )
+                        }
+                        return <h3 key={i} className={`font-bold ${size} text-[#18181b] mt-3 ${alignClass}`} style={style}>{content}</h3>
+                      }
+                      if (block.type === 'image' && block.url) {
+                        const w = block.width ?? 200
+                        const h = block.height ?? 150
+                        const align = block.align ?? 'block'
+                        if (align === 'block') {
+                          return (
+                            <div key={i} className="my-2">
+                              <img src={block.url} alt={block.alt || ''} width={w} height={h} className="rounded object-cover max-w-full" />
+                            </div>
+                          )
+                        }
+                        const floatClass = align === 'right' ? 'float-right ml-4 mb-2' : 'float-left mr-4 mb-2'
+                        return (
+                          <div key={i} className={floatClass}>
+                            <img src={block.url} alt={block.alt || ''} width={w} height={h} className="rounded object-cover" />
+                          </div>
+                        )
+                      }
+                      if (block.type === 'divider') {
+                        const lineStyle = block.lineStyle || 'single'
+                        const hrStyle = { width: '100%', border: 'none', borderTop: '1px solid #18181b', display: 'block' }
+                        return (
+                          <div key={i} className="my-4 w-full">
+                            <hr style={hrStyle} aria-hidden />
+                            {lineStyle === 'double' && <hr style={{ ...hrStyle, marginTop: '2px' }} aria-hidden />}
+                          </div>
+                        )
+                      }
+                      return null
+                    })}
+                  </div>
+                )
+              })()
             )}
           </div>
         </div>

@@ -27,11 +27,13 @@ import { UsersAdmin } from './pages/dashboard/super-admin/UsersAdmin'
 import { AdminRequests } from './pages/dashboard/super-admin/AdminRequests'
 import { Activity } from './pages/dashboard/super-admin/Activity'
 import { ROLES } from './constants/roles'
+import { BasicDashboard } from './pages/BasicDashboard'
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/" element={<BasicDashboard />} />
         <Route path="/login" element={<PublicOnlyRoute><Login /></PublicOnlyRoute>} />
         <Route path="/register" element={<PublicOnlyRoute><Register /></PublicOnlyRoute>} />
         <Route path="/forgot-password" element={<PublicOnlyRoute><ForgotPassword /></PublicOnlyRoute>} />
@@ -58,8 +60,7 @@ function App() {
           <Route path="super-admin/users" element={<ProtectedRoute allowedRoles={[ROLES.SUPER_ADMIN]}><UsersAdmin /></ProtectedRoute>} />
           <Route path="super-admin/activity" element={<ProtectedRoute allowedRoles={[ROLES.SUPER_ADMIN, ROLES.ADMIN_JOB, ROLES.ADMIN_RESUME, ROLES.ADMIN_AI]}><Activity /></ProtectedRoute>} />
         </Route>
-        <Route path="/" element={<Navigate to="/login" replace />} />
-        <Route path="*" element={<Navigate to="/login" replace />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   )

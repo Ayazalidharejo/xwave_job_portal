@@ -23,7 +23,7 @@ export function ResumeAdminList() {
           <ul className="space-y-2">
             {allResumes.map((r) => (
               <li key={r._id} className="text-sm text-neutral-700 py-1 border-b border-neutral-100 last:border-0">
-                {r.userId?.name} · {r.status}
+                {r.user?.name ?? r.userId?.name} · {r.status}
               </li>
             ))}
           </ul>

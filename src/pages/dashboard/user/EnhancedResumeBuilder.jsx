@@ -14,24 +14,52 @@ import { useAppSelector, useAppDispatch } from '../../../hooks'
 import { setMyResume, setResumeLoading, setResumeError } from '../../../store/slices/resumeSlice'
 import { resumeApi } from '../../../services/api'
 
+// Default preview template (user ise apne hisaab se edit karke save karta hai)
+const DEFAULT_RESUME_TEMPLATE = () => ({
+  personalInfo: {
+    fullName: 'Imrana Saif',
+    title: 'UX/UI Designer',
+    email: 'imranasaifwave92@gmail.com',
+    phone: '+92-3095813292',
+    location: '',
+    summary: 'Professional UX/UI Designer with experience in user-friendly interfaces, wireframing, and prototyping.'
+  },
+  experience: [
+    { id: Date.now() + 1, position: 'UX/UI Designer', company: 'RathiSoft Innovation', duration: 'Jul 2025 - Jan 2026', description: 'A Pakistan-based software development company. Tourism & Travel Booking Platform (12 Months). Contributed to UI/UX improvements, user-friendly layouts for tour listings, content clarity, and usability enhancements. Tools: Figma, Canva, Google Docs, Platform Admin Panel.' },
+    { id: Date.now() + 2, position: 'UI Designer', company: 'MedSynk: Small Clinics Web App', duration: 'Jul 2025 - Sep 2025', description: 'Designed a healthcare management web app for appointments and patient records. Created intuitive interface, wireframes, user flows, style guide, and final UI screens.' },
+    { id: Date.now() + 3, position: 'Design Intern', company: 'Dunya News Website Redesign', duration: 'Jan 2025 - March 2025', description: 'Redesign for usability, navigation, and visual appeal. Used Figma for high-fidelity design and auto layout.' },
+    { id: Date.now() + 4, position: 'UI Designer', company: 'Fixify: Cars & Bikes Breakdown App', duration: 'Sep 2024 - Jan 2025', description: 'Smart service app for car and bike breakdowns. Connects users with nearby mechanics. Reliable, fast, and easy to use.' }
+  ],
+  education: [
+    { id: Date.now() + 5, degree: 'Masters of Arts', institution: 'Government College Faisalabad, Pakistan', duration: 'Jun 2011 - Aug 2013', description: '' }
+  ],
+  skills: ['Figma', 'Canva', 'User research', 'Wireframing', 'Prototyping', 'Work With Components', 'Animation'],
+  languages: [],
+  certifications: [
+    { id: Date.now() + 6, degree: 'UI/UX Course', institution: 'XWAVE', duration: 'Sep 2024 - Sep 2025', description: '12-months on-site UI/UX course; executed 3 portfolio projects using Figma, Wireframing and Prototyping.' }
+  ]
+})
+
+const defaultResumeData = () => ({
+  personalInfo: {
+    fullName: '',
+    title: '',
+    email: '',
+    phone: '',
+    location: '',
+    summary: ''
+  },
+  experience: [],
+  education: [],
+  skills: [],
+  languages: [],
+  certifications: []
+})
+
 const EnhancedResumeBuilder = () => {
   const dispatch = useAppDispatch()
   const { myResume, loading } = useAppSelector((state) => state.resume)
-  const [resumeData, setResumeData] = useState({
-    personalInfo: {
-      fullName: '',
-      title: '',
-      email: '',
-      phone: '',
-      location: '',
-      summary: ''
-    },
-    experience: [],
-    education: [],
-    skills: [],
-    languages: [],
-    certifications: []
-  })
+  const [resumeData, setResumeData] = useState(defaultResumeData())
   const [isEditing, setIsEditing] = useState(false)
   const [showPreview, setShowPreview] = useState(false)
 
@@ -45,10 +73,23 @@ const EnhancedResumeBuilder = () => {
       const { data } = await resumeApi.getMy()
       dispatch(setMyResume(data))
       if (data) {
-        setResumeData(data)
+        const normalized = data.personalInfo != null
+          ? data
+          : { ...defaultResumeData(), ...(data.data || {}) }
+        const hasSavedContent = normalized.personalInfo?.fullName?.trim() ||
+          (normalized.experience && normalized.experience.length > 0) ||
+          (normalized.education && normalized.education.length > 0)
+        if (hasSavedContent) {
+          setResumeData(normalized)
+        } else {
+          setResumeData(DEFAULT_RESUME_TEMPLATE())
+        }
+      } else {
+        setResumeData(DEFAULT_RESUME_TEMPLATE())
       }
     } catch (err) {
       dispatch(setResumeError(err.response?.data?.message || 'Failed to load resume'))
+      setResumeData(DEFAULT_RESUME_TEMPLATE())
     } finally {
       dispatch(setResumeLoading(false))
     }
@@ -254,6 +295,27 @@ const EnhancedResumeBuilder = () => {
                       </div>
                       {edu.description && (
                         <p className="resume-item-description">{edu.description}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Certifications Section */}
+              {resumeData.certifications && resumeData.certifications.length > 0 && (
+                <div className="resume-section">
+                  <h2 className="resume-section-title">Certifications</h2>
+                  {resumeData.certifications.map((cert) => (
+                    <div key={cert.id} className="resume-item">
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <h3 className="resume-item-title">{cert.degree || cert.title}</h3>
+                          <p className="resume-item-subtitle">{cert.institution}</p>
+                        </div>
+                        <span className="resume-item-date">{cert.duration}</span>
+                      </div>
+                      {cert.description && (
+                        <p className="resume-item-description">{cert.description}</p>
                       )}
                     </div>
                   ))}
