@@ -210,7 +210,7 @@ export function Register() {
                         onChange={(e) => setValue('classGrade', Number(e.target.value))}
                       >
                         {CLASS_OPTIONS.map((n) => (
-                          <option key={n} value={n}>Class {n}</option>
+                          <option key={n} value={n}>Cohats {n}</option>
                         ))}
                       </select>
                     </div>
